@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小田恭平 | 動く職務経歴アルバム</title>
+
+<!-- ============================================================
+  📷 写真の差し替え方法
+  下の PHOTOS の "" の中に画像URL(またはファイル名)を入れるだけ。
+  空のままだと「写真を貼る」プレースホルダー枠が表示されます。
+============================================================ -->
+<script>
+const PHOTOS = {
+  hero:      "",   // 表紙のプロフィール写真(縦長推奨)
+  work1:     "",   // 採用のシーン
+  work2:     "",   // 自作ツールの画面など
+  work3:     "",   // テレビ取材のシーン
+  work4:     "",   // 商品・販促物
+  creative1: "",   // ダンス・ラップ
+  creative2: "",   // 音楽イベント「林檎の唄。」
+};
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Kurenaido&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+:root{
+  --paper:#F6F4EC;
+  --paper-deep:#ECE7D8;
+  --ink:#232E3C;
+  --ink-soft:#5B6673;
+  --shu:#C7361F;
+  --indigo:#2C4770;
+  --tape:#F2D98B;
+  --tape2:#B7D4C4;
+  --line:#D8D2C0;
+  --shadow:0 8px 24px rgba(35,46,60,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Zen Kaku Gothic New",sans-serif;
+  background:var(--paper-deep);
+  background-image:radial-gradient(rgba(35,46,60,.05) 1px, transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink);line-height:1.85;
+  overflow-x:hidden;
+}
+::selection{background:var(--tape)}
+img{max-width:100%}
+
+.page{max-width:1000px;margin:0 auto;background:var(--paper);
+  box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(35,46,60,.16)}
+section{padding:96px 60px;border-bottom:1px dashed var(--line);position:relative}
+@media(max-width:640px){section{padding:64px 20px}}
+
+/* ========== カーソル ========== */
+.cursor{position:fixed;top:0;left:0;width:10px;height:10px;border-radius:50%;
+  background:var(--shu);pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);transition:width .18s,height .18s,background .18s,border .18s;
+  mix-blend-mode:multiply}
+.cursor.grow{width:44px;height:44px;background:rgba(199,54,31,.08);border:1.5px solid var(--shu)}
+.cursor.stampable::after{content:"押";position:absolute;inset:0;display:grid;place-items:center;
+  font-family:"Shippori Mincho",serif;font-size:.75rem;color:var(--shu);font-weight:800}
+@media(hover:none),(prefers-reduced-motion:reduce){.cursor{display:none}}
+
+/* ========== 固定UI:ページ番号 & スタンプラリー ========== */
+.pagenum{position:fixed;top:18px;right:22px;z-index:900;
+  font-family:"Shippori Mincho",serif;font-weight:600;font-size:.85rem;letter-spacing:.2em;
+  background:var(--paper);border:1px solid var(--ink);padding:.25em 1em;box-shadow:var(--shadow)}
+.rally{position:fixed;left:16px;bottom:16px;z-index:900;background:#fff;
+  border:1px solid var(--line);box-shadow:var(--shadow);padding:10px 14px;
+  display:flex;align-items:center;gap:8px}
+.rally .ttl{font-family:"Zen Kurenaido",sans-serif;font-size:.8rem;color:var(--ink-soft);
+  writing-mode:vertical-rl;letter-spacing:.15em;margin-right:2px}
+.rally .spot{width:34px;height:34px;border:1.6px dashed var(--line);border-radius:50%;
+  display:grid;place-items:center;font-family:"Shippori Mincho",serif;font-weight:800;
+  font-size:.85rem;color:#C9C3B2;transition:color .2s}
+.rally .spot.done{border:2px solid var(--shu);border-style:solid;color:var(--shu);
+  transform:rotate(-10deg)}
+@media(max-width:640px){
+  .rally{padding:7px 10px;gap:5px}
+  .rally .spot{width:26px;height:26px;font-size:.7rem}
+  .rally .ttl{display:none}
+  .pagenum{font-size:.72rem;top:10px;right:10px}
+}
+.rally-done{position:fixed;inset:0;display:none;place-items:center;z-index:1200;pointer-events:none}
+.rally-done .card{background:var(--paper);border:2px solid var(--ink);padding:34px 48px;text-align:center;
+  box-shadow:0 30px 80px rgba(35,46,60,.35);transform:rotate(-2deg)}
+.rally-done .card h5{font-family:"Shippori Mincho",serif;font-size:1.5rem;font-weight:800;letter-spacing:.1em}
+.rally-done .card p{font-family:"Zen Kurenaido",sans-serif;color:var(--ink-soft)}
+.rally-done .big-hanko{width:96px;height:96px;font-size:1.6rem;margin:14px auto 6px}
+
+/* ========== 朱印 ========== */
+.hanko{display:inline-flex;align-items:center;justify-content:center;text-align:center;
+  border:2.5px solid var(--shu);color:var(--shu);border-radius:50%;
+  font-family:"Shippori Mincho",serif;font-weight:800;line-height:1.25;
+  transform:rotate(-8deg);mix-blend-mode:multiply;opacity:.92;padding:.5em}
+
+/* ========== 見出し ========== */
+.eyebrow{font-family:"Zen Kurenaido",sans-serif;color:var(--shu);font-size:1.05rem;letter-spacing:.08em}
+h2{font-family:"Shippori Mincho",serif;font-weight:800;
+  font-size:clamp(1.6rem,3.6vw,2.3rem);letter-spacing:.06em;margin:.15em 0 1.3em;
+  display:flex;align-items:center;gap:.6em}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ========== 写真(ドラッグ可) ========== */
+.photo{position:relative;background:#fff;padding:10px 10px 14px;box-shadow:var(--shadow);
+  touch-action:none;will-change:transform}
+.photo.drag{cursor:grab}
+.photo.drag:active{cursor:grabbing}
+.photo .frame{aspect-ratio:4/3;width:100%;overflow:hidden;
+  background:repeating-linear-gradient(45deg,#EFEBDF 0 12px,#E7E2D2 12px 24px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3em;color:var(--ink-soft)}
+.photo .frame.portrait{aspect-ratio:3/4}
+.photo .frame img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.photo .frame .cam{font-size:1.8rem;opacity:.55}
+.photo .frame .hint{font-family:"Zen Kurenaido",sans-serif;font-size:.9rem}
+.photo .caption{font-family:"Zen Kurenaido",sans-serif;font-size:.95rem;text-align:center;
+  margin-top:8px;color:var(--ink-soft)}
+.photo::before{content:"";position:absolute;top:-12px;left:50%;transform:translateX(-50%) rotate(-3deg);
+  width:96px;height:26px;background:var(--tape);opacity:.85;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.photo.tape-green::before{background:var(--tape2)}
+.drag-hint{font-family:"Zen Kurenaido",sans-serif;font-size:.8rem;color:var(--shu);text-align:center;margin-top:4px}
+
+/* ========== 表紙 ========== */
+.cover{min-height:92vh;padding:110px 60px 0;display:grid;grid-template-columns:1.25fr .9fr;
+  gap:48px;align-items:center;overflow:hidden}
+@media(max-width:780px){.cover{grid-template-columns:1fr;padding:90px 20px 0;min-height:auto}}
+.cover .label{display:inline-block;border:1.5px solid var(--ink);padding:.15em .9em;
+  font-size:.85rem;letter-spacing:.35em;margin-bottom:24px}
+.cover h1{font-family:"Shippori Mincho",serif;font-weight:800;
+  font-size:clamp(2.6rem,7.5vw,4.4rem);letter-spacing:.06em;line-height:1.3;overflow:hidden}
+.cover h1 .ch{display:inline-block}
+.cover .yomi{font-family:"Zen Kurenaido",sans-serif;color:var(--ink-soft);margin:.3em 0 1em}
+.cover .thesis{font-family:"Shippori Mincho",serif;font-weight:600;
+  font-size:clamp(1.1rem,2.6vw,1.45rem);letter-spacing:.05em;
+  border-left:3px solid var(--shu);padding-left:.9em;margin:1.1em 0}
+.cover p.sub{color:var(--ink-soft);font-size:.95rem;max-width:34em}
+.hero-hanko{position:absolute;top:64px;right:64px;width:92px;height:92px;font-size:1.3rem;z-index:3}
+@media(max-width:780px){.hero-hanko{top:18px;right:16px;width:66px;height:66px;font-size:.95rem}}
+.stamp-hint{font-family:"Zen Kurenaido",sans-serif;color:var(--shu);font-size:.9rem;margin-top:1.4em}
+.stamp-pop{position:absolute;width:64px;height:64px;font-size:1.05rem;pointer-events:none;z-index:5}
+/* 浮遊する紙片 */
+.float-bit{position:absolute;pointer-events:none;opacity:.85;z-index:1}
+.bit-tape{width:90px;height:24px;background:var(--tape);transform:rotate(14deg);box-shadow:0 2px 4px rgba(0,0,0,.08)}
+.bit-tape2{width:70px;height:22px;background:var(--tape2);transform:rotate(-20deg)}
+.bit-circle{width:46px;height:46px;border:2px dashed var(--shu);border-radius:50%;opacity:.35}
+.bit-plus{font-family:"Shippori Mincho",serif;font-size:1.6rem;color:var(--indigo);opacity:.3}
+
+/* ========== マーキー ========== */
+.marquee{border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);
+  overflow:hidden;padding:.55em 0;margin-top:70px;background:var(--paper)}
+.marquee .track{display:flex;width:max-content;animation:mq 26s linear infinite}
+.marquee span{font-family:"Shippori Mincho",serif;font-weight:600;font-size:1rem;
+  letter-spacing:.25em;padding:0 1.4em;white-space:nowrap}
+.marquee span i{font-style:normal;color:var(--shu)}
+@keyframes mq{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.marquee .track{animation:none}}
+
+/* ========== プロフィール ========== */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 44px}
+@media(max-width:640px){.profile-grid{grid-template-columns:1fr}}
+.profile-grid dl{display:grid;grid-template-columns:8em 1fr;border-top:1px solid var(--line)}
+.profile-grid dt,.profile-grid dd{padding:.7em .2em;border-bottom:1px solid var(--line);font-size:.95rem}
+.profile-grid dt{font-weight:700;color:var(--indigo)}
+
+/* ========== 数字 ========== */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.stats{grid-template-columns:1fr}}
+.stat{background:#fff;border:1px solid var(--line);padding:28px 18px 22px;text-align:center;
+  box-shadow:var(--shadow);transition:transform .25s,box-shadow .25s}
+.stat:hover{transform:translateY(-6px) rotate(-1deg);box-shadow:0 16px 34px rgba(35,46,60,.16)}
+.stat .num{font-family:"Shippori Mincho",serif;font-weight:800;font-size:2.4rem;color:var(--shu);line-height:1.1}
+.stat .num small{font-size:1rem;color:var(--ink)}
+.stat .name{font-weight:700;font-size:.92rem;margin-top:.4em}
+.stat .note{font-family:"Zen Kurenaido",sans-serif;font-size:.85rem;color:var(--ink-soft);margin-top:.2em}
+
+/* ========== 仕事 ========== */
+.work{display:grid;grid-template-columns:300px 1fr;gap:44px;align-items:start;margin-bottom:76px;perspective:900px}
+.work:last-child{margin-bottom:0}
+.work.rev{grid-template-columns:1fr 300px}
+.work.rev .photo-wrap{order:2}
+@media(max-width:780px){.work,.work.rev{grid-template-columns:1fr}.work.rev .photo-wrap{order:0}}
+.work h3{font-family:"Shippori Mincho",serif;font-weight:800;font-size:1.35rem;letter-spacing:.04em;margin-bottom:.5em}
+.work h3 .tag{display:inline-block;vertical-align:.2em;margin-left:.7em;
+  font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700;font-size:.7rem;
+  color:#fff;background:var(--indigo);padding:.15em .8em;letter-spacing:.15em}
+.work p{font-size:.95rem;margin-bottom:.8em}
+.work ul{list-style:none;margin:.4em 0 0}
+.work li{font-size:.92rem;padding-left:1.4em;position:relative;margin-bottom:.5em}
+.work li::before{content:"✔";position:absolute;left:0;color:var(--shu);font-weight:700}
+.mini-hanko{width:80px;height:80px;font-size:.85rem;position:absolute;right:-16px;bottom:-16px;background:var(--paper)}
+
+/* ========== 寄せ書き ========== */
+.yosegaki{display:grid;grid-template-columns:repeat(2,1fr);gap:28px}
+@media(max-width:700px){.yosegaki{grid-template-columns:1fr}}
+.msg{font-family:"Zen Kurenaido",sans-serif;font-size:1.1rem;line-height:1.95;
+  background:#fff;padding:28px 26px 22px;box-shadow:var(--shadow);position:relative;
+  transition:transform .3s}
+.msg:hover{transform:scale(1.03) rotate(0deg)!important;z-index:2}
+.msg .from{display:block;text-align:right;margin-top:.8em;color:var(--indigo);font-size:.95rem}
+.msg::after{content:"";position:absolute;width:70px;height:20px;background:var(--tape2);opacity:.8;
+  top:-10px;right:24px;transform:rotate(4deg);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.msg:nth-child(odd)::after{background:var(--tape);left:24px;right:auto;transform:rotate(-4deg)}
+.yose-note{font-family:"Zen Kurenaido",sans-serif;color:var(--ink-soft);font-size:.9rem;margin-top:24px;text-align:right}
+
+/* ========== スキル ========== */
+.skill-group{margin-bottom:28px}
+.skill-group h4{font-size:.85rem;letter-spacing:.2em;color:var(--indigo);
+  border-left:4px solid var(--indigo);padding-left:.6em;margin-bottom:.7em}
+.stickers{display:flex;flex-wrap:wrap;gap:10px}
+.sticker{background:#fff;border:1.5px solid var(--ink);border-radius:999px;
+  padding:.28em 1em;font-size:.88rem;font-weight:500;box-shadow:2px 2px 0 var(--line);
+  cursor:pointer;transition:transform .15s;user-select:none}
+.sticker:hover{transform:rotate(-3deg) scale(1.08)}
+.sticker.hot{border-color:var(--shu);color:var(--shu);box-shadow:2px 2px 0 rgba(199,54,31,.25)}
+.sticker.boing{animation:boing .55s ease}
+@keyframes boing{
+  0%{transform:none}
+  30%{transform:translateY(-14px) rotate(-7deg) scale(1.1)}
+  55%{transform:translateY(2px) rotate(4deg)}
+  75%{transform:translateY(-4px) rotate(-2deg)}
+  100%{transform:none}
+}
+
+/* ========== 課外活動 ========== */
+.creative{display:grid;grid-template-columns:1fr 250px 250px;gap:32px;align-items:start}
+@media(max-width:840px){.creative{grid-template-columns:1fr 1fr}.creative .text{grid-column:1/-1}}
+@media(max-width:520px){.creative{grid-template-columns:1fr}}
+.creative .text p{font-size:.95rem;margin-bottom:.8em}
+
+/* ========== 進路 ========== */
+.future{background:var(--indigo);color:#F4F6FA;margin:0 -60px;padding:96px 60px;border-bottom:none}
+@media(max-width:640px){.future{margin:0 -20px;padding:64px 20px}}
+.future .eyebrow{color:var(--tape)}
+.future h2{color:#fff}
+.future h2::after{background:rgba(255,255,255,.25)}
+.future .cols{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+@media(max-width:700px){.future .cols{grid-template-columns:1fr}}
+.future h4{font-size:1rem;letter-spacing:.1em;margin-bottom:.6em;color:var(--tape)}
+.future ul{list-style:none}
+.future li{padding-left:1.3em;position:relative;font-size:.95rem;margin-bottom:.55em}
+.future li::before{content:"○";position:absolute;left:0;font-size:.8em;top:.25em}
+.future li.ng::before{content:"×"}
+.future .closing{font-family:"Shippori Mincho",serif;font-size:1.2rem;letter-spacing:.05em;
+  margin-top:56px;text-align:center;font-weight:600}
+.future .contact{display:block;width:fit-content;margin:26px auto 0;background:var(--shu);color:#fff;
+  text-decoration:none;padding:.75em 2.6em;font-weight:700;letter-spacing:.15em;border-radius:2px;
+  box-shadow:0 5px 0 rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s}
+.future .contact:hover{transform:translateY(-3px);box-shadow:0 8px 0 rgba(0,0,0,.3)}
+.future .contact:focus-visible,a:focus-visible{outline:3px solid var(--tape);outline-offset:3px}
+.kan-wrap{text-align:center;margin-top:64px}
+.kan{width:130px;height:130px;font-size:3rem;border-width:4px;background:transparent;
+  border-color:#F4F6FA;color:#F4F6FA;display:inline-flex}
+.colophon{text-align:center;font-family:"Zen Kurenaido",sans-serif;font-size:.85rem;
+  color:rgba(255,255,255,.6);margin-top:44px}
+
+/* 紙吹雪 */
+.confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:1100;pointer-events:none}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" aria-hidden="true"></div>
+<div class="pagenum" aria-hidden="true">PAGE 01 / 08</div>
+
+<!-- スタンプラリー -->
+<div class="rally" aria-label="読破スタンプラリー">
+  <span class="ttl">スタンプラリー</span>
+  <span class="spot" data-spot="profile">顔</span>
+  <span class="spot" data-spot="stats">数</span>
+  <span class="spot" data-spot="works">仕</span>
+  <span class="spot" data-spot="voices">声</span>
+  <span class="spot" data-spot="skills">技</span>
+  <span class="spot" data-spot="creative">遊</span>
+  <span class="spot" data-spot="future">志</span>
+</div>
+<div class="rally-done" id="rallyDone">
+  <div class="card">
+    <h5>全ページ読破、ありがとうございます!</h5>
+    <span class="hanko big-hanko">読破<br>認定</span>
+    <p>ここまで読んだあなたと、ぜひお話ししたいです。</p>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ===== 表紙 ===== -->
+<section class="cover" id="cover">
+  <span class="hanko hero-hanko" id="heroHanko">小田<br>之印</span>
+  <!-- 浮遊パーツ(マウスで視差) -->
+  <span class="float-bit bit-tape"  data-depth="30" style="top:14%;left:55%"></span>
+  <span class="float-bit bit-tape2" data-depth="18" style="top:70%;left:6%"></span>
+  <span class="float-bit bit-circle" data-depth="45" style="top:22%;left:8%"></span>
+  <span class="float-bit bit-plus"  data-depth="24" style="top:80%;left:58%">+</span>
+  <span class="float-bit bit-plus"  data-depth="38" style="top:8%;left:34%">✳</span>
+
+  <div class="cover-text">
+    <span class="label">動く職務経歴アルバム ── 2024-2026年度版</span>
+    <h1 id="heroTitle">小田 恭平</h1>
+    <p class="yomi">おだ きょうへい ── 1999年生まれ / 京都大学 教育学部 卒</p>
+    <p class="thesis" id="thesis">曖昧な構想を、<br>現場で動く仕組みに変える人。</p>
+    <p class="sub">卒業アルバム制作会社・株式会社夢ふぉとにて、社長直下で採用・業務改善・商品開発・広報PR・経営企画補佐を横断。抽象を構造化し、資料・ツール・運用に落とし込んできました。</p>
+    <p class="stamp-hint">🖋 このあたりの余白をクリックすると、ハンコが押せます。</p>
+  </div>
+  <div class="photo drag" id="heroPhoto">
+    <div class="frame portrait" data-photo="hero">
+      <span class="cam">📷</span><span class="hint">ここにプロフィール写真</span>
+    </div>
+    <div class="caption">本人近影(差し替え可)</div>
+    <div class="drag-hint">← ドラッグで動かせます</div>
+  </div>
+
+  <div class="marquee" style="grid-column:1/-1" aria-hidden="true">
+    <div class="track">
+      <span>採用 <i>◆</i> 業務改善 <i>◆</i> 社内DX <i>◆</i> 商品開発 <i>◆</i> 広報PR <i>◆</i> 経営企画補佐 <i>◆</i> AI活用推進 <i>◆</i> </span>
+      <span>採用 <i>◆</i> 業務改善 <i>◆</i> 社内DX <i>◆</i> 商品開発 <i>◆</i> 広報PR <i>◆</i> 経営企画補佐 <i>◆</i> AI活用推進 <i>◆</i> </span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== プロフィール ===== -->
+<section id="profile">
+  <span class="eyebrow" data-reveal>Page 02 ── 出席番号1番</span>
+  <h2 data-reveal>基本プロフィール</h2>
+  <div class="profile-grid">
+    <dl data-reveal="left">
+      <dt>氏名</dt><dd>小田 恭平</dd>
+      <dt>年齢</dt><dd>27歳(2026年時点)</dd>
+      <dt>学歴</dt><dd>京都大学 教育学部 卒業(24卒)</dd>
+      <dt>現職</dt><dd>株式会社夢ふぉと(卒園・卒業アルバム制作)</dd>
+    </dl>
+    <dl data-reveal="right">
+      <dt>在籍</dt><dd>長期インターン約1年半 → 2024年4月 正社員</dd>
+      <dt>レポートライン</dt><dd>社長・常務取締役など経営層直下</dd>
+      <dt>担当領域</dt><dd>採用 / 業務改善 / 商品開発 / 広報PR / 経営企画補佐 / AI活用推進</dd>
+      <dt>得意技</dt><dd>抽象の構造化・言語化、現場実装、人を見る力</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ===== 数字 ===== -->
+<section id="stats">
+  <span class="eyebrow" data-reveal>Page 03 ── 通知表(数字は本気です)</span>
+  <h2 data-reveal>数字で見る実績</h2>
+  <div class="stats">
+    <div class="stat" data-stamp><div class="num"><span data-count="100">0</span><small>%</small></div><div class="name">内定承諾率</div><div class="note">24卒・27卒。25卒も約75%</div></div>
+    <div class="stat" data-stamp><div class="num"><span data-count="4">0</span><small>件</small></div><div class="name">テレビ取材の獲得</div><div class="note">WBS・読売テレビ・NHK Eテレ・NHK</div></div>
+    <div class="stat" data-stamp><div class="num"><span data-count="15">0</span><small>件</small></div><div class="name">PR TIMES記事作成</div><div class="note">企画・執筆・取材対応・出演まで</div></div>
+    <div class="stat" data-stamp><div class="num"><span data-count="50">0</span><small>時間+</small></div><div class="name">年間工数削減(見込)</div><div class="note">Python製ツールを約3時間で作成</div></div>
+    <div class="stat" data-stamp><div class="num"><span data-count="10">0</span><small>名</small></div><div class="name">京大生インターン集客</div><div class="note">高学歴採用施策を先頭で推進</div></div>
+    <div class="stat" data-stamp><div class="num"><span data-count="7">0</span><small>名+</small></div><div class="name">中途・パート等の入社関与</div><div class="note">現職スタッフ約50名のうち</div></div>
+  </div>
+</section>
+
+<!-- ===== 主な仕事 ===== -->
+<section id="works">
+  <span class="eyebrow" data-reveal>Page 04 ── 思い出のページ(仕事編)</span>
+  <h2 data-reveal>主な仕事とプロジェクト</h2>
+
+  <div class="work">
+    <div class="photo-wrap" data-reveal="left">
+      <div class="photo drag tilt">
+        <div class="frame" data-photo="work1"><span class="cam">📷</span><span class="hint">採用シーンの写真</span></div>
+        <div class="caption">面接・採用イベントにて</div>
+        <span class="hanko mini-hanko">承諾率<br>100%</span>
+      </div>
+    </div>
+    <div data-reveal="right">
+      <h3>採用<span class="tag">新卒・中途・パート・業務委託</span></h3>
+      <p>採用専任ではない中で、複数年度の新卒採用を実務主担当として一気通貫で運用。媒体運用から候補者対応、面接、社内調整、内定承諾まで。</p>
+      <ul>
+        <li>24卒3名・25卒3名・27卒2名の採用に関与。24卒・27卒は承諾率100%</li>
+        <li>マイナビ・engage・Indeed・しゅふJOB・ハローワーク等を運用</li>
+        <li>京大生中心に長期インターン生約10名を集客し、高学歴採用施策を推進</li>
+        <li>社長から「人を深く観察する、見る力が突出している」と評価</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="work rev">
+    <div class="photo-wrap" data-reveal="right">
+      <div class="photo drag tilt tape-green">
+        <div class="frame" data-photo="work2"><span class="cam">📷</span><span class="hint">ツール画面のキャプチャ</span></div>
+        <div class="caption">自作ツールたち</div>
+      </div>
+    </div>
+    <div data-reveal="left">
+      <h3>業務改善・社内DX<span class="tag">AI / GAS / Python</span></h3>
+      <p>現場の困りごとをヒアリングし、外部ツールに頼りすぎず、実務に合った小〜中規模の仕組みを内製。作って終わりではなく、運用まで見届けます。</p>
+      <ul>
+        <li>Googleカレンダー連携の候補者日程予約システムを約1日で構築(GAS+GitHub Pages)</li>
+        <li>写真一括リネーム.exeをAI支援×Pythonで約3時間で作成。年間50時間以上の削減見込み</li>
+        <li>カメラマン手配業務の属人化を、要件整理とスプレッドシートの仕組みで解消</li>
+        <li>利益率計算・値決めルール整備で、常務から「バックオフィス側は俺より強い」と評価</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="work">
+    <div class="photo-wrap" data-reveal="left">
+      <div class="photo drag tilt">
+        <div class="frame" data-photo="work3"><span class="cam">📷</span><span class="hint">テレビ取材のワンシーン</span></div>
+        <div class="caption">取材対応も出演も</div>
+        <span class="hanko mini-hanko">TV取材<br>4件</span>
+      </div>
+    </div>
+    <div data-reveal="right">
+      <h3>広報PR・マーケティング<span class="tag">PR TIMES / メディア対応</span></h3>
+      <p>2024年7月から広報を担当し、記事の企画・執筆から、記者対応、社長を巻き込む取材準備、自らの出演まで対応。</p>
+      <ul>
+        <li>PR TIMES記事を約15件作成。うち1件が話題化し、テレビ取材4件の獲得に貢献</li>
+        <li>ワールドビジネスサテライト、かんさい情報ネットten.、NHK Eテレ(好評で2回企画)ほか</li>
+        <li>販促物・FAX・DM・LP・サイトをAI・Canva等でスピーディーに制作</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="work rev">
+    <div class="photo-wrap" data-reveal="right">
+      <div class="photo drag tilt tape-green">
+        <div class="frame" data-photo="work4"><span class="cam">📷</span><span class="hint">商品・販促物の写真</span></div>
+        <div class="caption">構想をカタチに</div>
+      </div>
+    </div>
+    <div data-reveal="left">
+      <h3>商品開発・経営企画補佐<span class="tag">構想 → 実装</span></h3>
+      <p>社長の感覚的な構想と、常務の論理的な視点、現場の実務。三者の間に立って「翻訳」し、企画を前に進めるのが持ち場です。</p>
+      <ul>
+        <li>新商品構想に対し、モック作成・価格設計・販促物・LP/DM・公開まで一気通貫で担当</li>
+        <li>看板商品「パーソナルページ」のプロジェクトを、社内公募・デザイン選定含め運用</li>
+        <li>MVV言語化、運営会議参加、社内行事・合宿の企画から司会進行まで</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 寄せ書き ===== -->
+<section id="voices">
+  <span class="eyebrow" data-reveal>Page 05 ── 寄せ書き</span>
+  <h2 data-reveal>まわりの人からもらった言葉</h2>
+  <div class="yosegaki">
+    <div class="msg" data-msg>「人を深く観察する、見る力が突出している」<span class="from">── 社長より(採用業務にて)</span></div>
+    <div class="msg" data-msg>「普通の人が1年以上かかって覚えることを、1週間で覚えた」<span class="from">── 常務取締役より(繁忙期対応にて)</span></div>
+    <div class="msg" data-msg>「バックオフィス側は俺より強い」<span class="from">── 常務取締役より(価格設計・データ分析にて)</span></div>
+    <div class="msg" data-msg>「夢ふぉといいなと感じた部分の大部分は、小田さんが担っていたと思います」<span class="from">── 採用イベントで出会った学生より</span></div>
+  </div>
+  <p class="yose-note" data-reveal>※ いずれも実際にいただいた言葉です。研修プログラムESJでは、サブサポーターながら異例のMVPサポーターにも選出。</p>
+</section>
+
+<!-- ===== スキル ===== -->
+<section id="skills">
+  <span class="eyebrow" data-reveal>Page 06 ── シール帳(クリック / タップで跳ねます)</span>
+  <h2 data-reveal>スキル・使用ツール</h2>
+  <div class="skill-group"><h4>業務改善・データ</h4>
+    <div class="stickers"><span class="sticker hot">Google スプレッドシート</span><span class="sticker hot">GAS</span><span class="sticker">Excel</span><span class="sticker">関数設計</span><span class="sticker">利益率・価格計算</span><span class="sticker">業務フロー設計</span></div>
+  </div>
+  <div class="skill-group"><h4>開発・AI活用</h4>
+    <div class="stickers"><span class="sticker hot">ChatGPT / Gemini</span><span class="sticker">Python(AI支援でのツール作成)</span><span class="sticker">GitHub Pages</span><span class="sticker">Googleカレンダー連携</span><span class="sticker">VS Code</span></div>
+  </div>
+  <div class="skill-group"><h4>採用・広報・制作</h4>
+    <div class="stickers"><span class="sticker hot">面接・候補者対応</span><span class="sticker">マイナビ / engage / Indeed</span><span class="sticker">PR TIMES</span><span class="sticker">Canva</span><span class="sticker">LP / DM / チラシ制作</span><span class="sticker">取材対応</span></div>
+  </div>
+  <div class="skill-group"><h4>対人・組織</h4>
+    <div class="stickers"><span class="sticker hot">経営層と現場の翻訳</span><span class="sticker">MVV言語化</span><span class="sticker">司会進行・場づくり</span><span class="sticker">研修伴走(ESJ MVPサポーター)</span></div>
+  </div>
+</section>
+
+<!-- ===== 課外活動 ===== -->
+<section id="creative">
+  <span class="eyebrow" data-reveal>Page 07 ── 課外活動の記録</span>
+  <h2 data-reveal>仕事の外での顔</h2>
+  <div class="creative">
+    <div class="text" data-reveal>
+      <p>ダンス、ラップ、音楽編集などの表現活動を継続中。音楽イベント<strong>「林檎の唄。」</strong>を自ら運営し、利益創出も経験しました。</p>
+      <p>イベント管理用のWebアプリを自作するなど、プライベートでも「企画 → 集客 → 運営 → 管理 → クリエイティブ」を一人で横断。遊びにも、仕組みで本気を出すタイプです。</p>
+    </div>
+    <div data-reveal="left"><div class="photo drag tilt">
+      <div class="frame" data-photo="creative1"><span class="cam">🎤</span><span class="hint">ダンス・ラップの写真</span></div>
+      <div class="caption">ステージにて</div>
+    </div></div>
+    <div data-reveal="right"><div class="photo drag tilt tape-green">
+      <div class="frame" data-photo="creative2"><span class="cam">🍎</span><span class="hint">「林檎の唄。」の写真</span></div>
+      <div class="caption">主催イベント「林檎の唄。」</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ===== 進路 ===== -->
+<section class="future" id="future">
+  <span class="eyebrow" data-reveal>Last Page ── 卒業後の進路</span>
+  <h2 data-reveal>これから目指すこと</h2>
+  <div class="cols">
+    <div data-reveal="left">
+      <h4>志向する職種</h4>
+      <ul>
+        <li>業務改善・社内DX・BizOps / Ops系</li>
+        <li>事業推進・営業企画・商品企画</li>
+        <li>採用企画・経営企画補佐</li>
+      </ul>
+      <h4 style="margin-top:1.6em">大切にしたい働き方</h4>
+      <ul>
+        <li>第1子誕生予定。家庭と両立し長期的に成果を出す</li>
+        <li>自由度の高いフレックス、週4日程度〜フルリモート</li>
+        <li>希望年収 600〜700万円(役割次第で800万円も視野)</li>
+      </ul>
+    </div>
+    <div data-reveal="right">
+      <h4>マッチしづらい方向性</h4>
+      <ul>
+        <li class="ng">完全歩合営業・長時間労働前提の環境</li>
+        <li class="ng">常時出社必須の働き方</li>
+        <li class="ng">純粋なソフトウェアエンジニア職</li>
+      </ul>
+      <h4 style="margin-top:1.6em">軸にしていること</h4>
+      <ul>
+        <li>現場と経営の間の課題を見つける</li>
+        <li>資料・仕組み・ツール・運用に落とし込む</li>
+        <li>AI/IT活用 × 人の巻き込みで組織を前進させる</li>
+      </ul>
+    </div>
+  </div>
+  <p class="closing" data-reveal>アルバムは、ここまで。<br>続きのページは、次の場所で一緒に作りたいと思っています。</p>
+  <a class="contact" href="mailto:your-email@example.com" data-reveal>お問い合わせはこちら</a>
+  <div class="kan-wrap"><span class="hanko kan" id="kanStamp">完</span></div>
+  <p class="colophon">※ メールアドレスは差し替えてください / 写真はHTML冒頭のPHOTOSで一括変更できます</p>
+</section>
+
+</div>
+
+<script>
+/* ===== 写真差し込み ===== */
+document.querySelectorAll('[data-photo]').forEach(el=>{
+  const src = PHOTOS[el.dataset.photo];
+  if(src){ el.innerHTML = '<img src="'+src+'" alt="">'; }
+});
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hasGsap = typeof gsap !== 'undefined';
+
+/* ===== カスタムカーソル ===== */
+const cursor = document.querySelector('.cursor');
+if(matchMedia('(hover:hover)').matches && !reduced){
+  addEventListener('mousemove',e=>{
+    cursor.style.left = e.clientX+'px'; cursor.style.top = e.clientY+'px';
+  });
+  document.querySelectorAll('a,.sticker,.stat,.msg,.photo.drag').forEach(el=>{
+    el.addEventListener('mouseenter',()=>cursor.classList.add('grow'));
+    el.addEventListener('mouseleave',()=>cursor.classList.remove('grow'));
+  });
+  const cover = document.getElementById('cover');
+  cover.addEventListener('mouseenter',()=>cursor.classList.add('stampable','grow'));
+  cover.addEventListener('mouseleave',()=>cursor.classList.remove('stampable','grow'));
+}
+
+/* ===== ドラッグできる写真 ===== */
+let zTop = 10;
+document.querySelectorAll('.photo.drag').forEach(ph=>{
+  let sx=0, sy=0, ox=0, oy=0, dragging=false;
+  const rot = (Math.random()*4-2);
+  ph.style.transform = `rotate(${rot}deg)`;
+  ph.dataset.x = 0; ph.dataset.y = 0;
+  ph.addEventListener('pointerdown',e=>{
+    dragging=true; ph.setPointerCapture(e.pointerId);
+    sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(ph.dataset.x); oy=parseFloat(ph.dataset.y);
+    ph.style.zIndex = ++zTop;
+    if(hasGsap&&!reduced) gsap.to(ph,{scale:1.05,rotate:rot+3,boxShadow:'0 20px 40px rgba(35,46,60,.25)',duration:.2});
+  });
+  ph.addEventListener('pointermove',e=>{
+    if(!dragging) return;
+    const x = ox + e.clientX - sx, y = oy + e.clientY - sy;
+    ph.dataset.x = x; ph.dataset.y = y;
+    ph.style.transform = `translate(${x}px,${y}px) rotate(${rot+3}deg) scale(1.05)`;
+  });
+  const drop = e=>{
+    if(!dragging) return; dragging=false;
+    const x=parseFloat(ph.dataset.x), y=parseFloat(ph.dataset.y);
+    if(hasGsap&&!reduced){
+      gsap.to(ph,{scale:1,rotate:rot,boxShadow:'0 8px 24px rgba(35,46,60,.12)',duration:.35,ease:'back.out(2)',
+        onUpdate:()=>{},onComplete:()=>{ph.style.transform=`translate(${x}px,${y}px) rotate(${rot}deg)`}});
+    }
+    ph.style.transform = `translate(${x}px,${y}px) rotate(${rot}deg)`;
+  };
+  ph.addEventListener('pointerup',drop); ph.addEventListener('pointercancel',drop);
+});
+
+/* ===== ヒーロー:クリックでハンコ ===== */
+const KANJI = ['優','良','秀','推','好','招','夢'];
+const coverEl = document.getElementById('cover');
+coverEl.addEventListener('click',e=>{
+  if(e.target.closest('.photo,a,button,.marquee')) return;
+  const r = coverEl.getBoundingClientRect();
+  const s = document.createElement('span');
+  s.className='hanko stamp-pop';
+  s.textContent = KANJI[Math.floor(Math.random()*KANJI.length)];
+  s.style.left=(e.clientX-r.left-32)+'px';
+  s.style.top =(e.clientY-r.top -32)+'px';
+  coverEl.appendChild(s);
+  if(hasGsap&&!reduced){
+    gsap.fromTo(s,{scale:2.2,opacity:0,rotate:-25},{scale:1,opacity:.9,rotate:-8,duration:.3,ease:'power3.in'});
+    gsap.to(s,{opacity:0,delay:4,duration:1,onComplete:()=>s.remove()});
+  } else { setTimeout(()=>s.remove(),4000); }
+});
+
+/* ===== ヒーロー:浮遊パーツの視差 ===== */
+if(matchMedia('(hover:hover)').matches && !reduced){
+  coverEl.addEventListener('mousemove',e=>{
+    const r=coverEl.getBoundingClientRect();
+    const nx=(e.clientX-r.left)/r.width-.5, ny=(e.clientY-r.top)/r.height-.5;
+    document.querySelectorAll('.float-bit').forEach(b=>{
+      const d=+b.dataset.depth;
+      b.style.translate = `${nx*d}px ${ny*d}px`;
+    });
+  });
+}
+
+/* ===== スキルシール:クリック/タップで跳ねる ===== */
+document.querySelectorAll('.sticker').forEach(s=>{
+  s.addEventListener('click',()=>{
+    s.classList.remove('boing');
+    void s.offsetWidth; /* アニメーションをリセットして連打にも対応 */
+    s.classList.add('boing');
+  });
+  s.addEventListener('animationend',()=>s.classList.remove('boing'));
+});
+
+/* ===== GSAP アニメーション ===== */
+if(hasGsap && !reduced){
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* --- オープニング --- */
+  const title = document.getElementById('heroTitle');
+  title.innerHTML = [...title.textContent].map(c=>`<span class="ch">${c===' '?'&nbsp;':c}</span>`).join('');
+  const tl = gsap.timeline({defaults:{ease:'power3.out'}});
+  tl.from('.page',{opacity:0,y:30,duration:.6})
+    .from('#heroTitle .ch',{y:'1.2em',opacity:0,stagger:.06,duration:.7},'-=.2')
+    .from('.cover .label',{x:-24,opacity:0,duration:.5},'-=.6')
+    .from('.cover .yomi',{opacity:0,duration:.5},'-=.4')
+    .from('#thesis',{clipPath:'inset(0 100% 0 0)',duration:.8},'-=.3')
+    .from('.cover .sub, .stamp-hint',{opacity:0,y:14,stagger:.12,duration:.5},'-=.4')
+    .from('#heroPhoto',{y:-90,opacity:0,rotate:8,duration:.8,ease:'bounce.out'},'-=.6')
+    .from('#heroHanko',{scale:2.4,opacity:0,rotate:-30,duration:.4,ease:'power4.in'},'-=.5')
+    .from('.float-bit',{opacity:0,scale:0,stagger:.06,duration:.4,ease:'back.out(2)'},'-=.2')
+    .from('.marquee',{opacity:0,duration:.5},'-=.2');
+
+  /* --- 汎用リビール --- */
+  gsap.utils.toArray('[data-reveal]').forEach(el=>{
+    const dir = el.dataset.reveal;
+    const from = {opacity:0,duration:.8,ease:'power3.out',
+      x: dir==='left'?-60: dir==='right'?60:0,
+      y: (dir==='left'||dir==='right')?0:36};
+    gsap.from(el,{...from,scrollTrigger:{trigger:el,start:'top 85%'}});
+  });
+
+  /* --- 数字:カウントアップ+スタンプ --- */
+  gsap.utils.toArray('.stat').forEach((card,i)=>{
+    gsap.fromTo(card,{opacity:0,scale:1.3,rotate:-5},
+      {opacity:1,scale:1,rotate:0,duration:.4,ease:'back.out(1.6)',delay:(i%3)*.1,
+       scrollTrigger:{trigger:card,start:'top 88%'}});
+    const numEl = card.querySelector('[data-count]');
+    const target = +numEl.dataset.count;
+    gsap.fromTo(numEl,{innerText:0},{innerText:target,duration:1.2,ease:'power2.out',snap:{innerText:1},
+      scrollTrigger:{trigger:card,start:'top 88%'}});
+  });
+
+  /* --- 寄せ書き:ポンと登場+ゆらゆら --- */
+  gsap.utils.toArray('.msg').forEach((m,i)=>{
+    const rot = i%2? 1 : -1.2;
+    gsap.set(m,{rotate:rot});
+    gsap.from(m,{opacity:0,scale:.85,rotate:rot*4,duration:.55,ease:'back.out(1.8)',delay:(i%2)*.12,
+      scrollTrigger:{trigger:m,start:'top 88%'}});
+    gsap.to(m,{y:'+=5',duration:2.4+i*.3,yoyo:true,repeat:-1,ease:'sine.inOut',delay:i*.4});
+  });
+
+  /* --- シール:順番にポップ --- */
+  gsap.utils.toArray('.stickers').forEach(g=>{
+    gsap.from(g.children,{opacity:0,scale:0,rotate:()=>gsap.utils.random(-12,12),
+      stagger:.05,duration:.4,ease:'back.out(2.2)',clearProps:'all',
+      scrollTrigger:{trigger:g,start:'top 90%'}});
+  });
+
+  /* --- 「完」スタンプ --- */
+  gsap.from('#kanStamp',{scale:3,opacity:0,rotate:-35,duration:.45,ease:'power4.in',
+    scrollTrigger:{trigger:'#kanStamp',start:'top 92%'}});
+
+  /* --- ページ番号 --- */
+  const pageEl = document.querySelector('.pagenum');
+  const secs = ['cover','profile','stats','works','voices','skills','creative','future'];
+  secs.forEach((id,i)=>{
+    ScrollTrigger.create({trigger:'#'+id,start:'top 50%',end:'bottom 50%',
+      onToggle:s=>{ if(s.isActive) pageEl.textContent = `PAGE 0${i+1} / 08`; }});
+  });
+} else {
+  document.querySelectorAll('[data-count]').forEach(n=>n.textContent=n.dataset.count);
+}
+
+/* ===== スタンプラリー ===== */
+const spots = {profile:0,stats:0,works:0,voices:0,skills:0,creative:0,future:0};
+let rallyFinished = false;
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    const id = e.target.id;
+    if(spots[id]===0){
+      spots[id]=1;
+      const spot = document.querySelector(`.spot[data-spot="${id}"]`);
+      spot.classList.add('done');
+      if(hasGsap&&!reduced) gsap.fromTo(spot,{scale:2},{scale:1,rotate:-10,duration:.35,ease:'back.out(2)'});
+      if(Object.values(spots).every(v=>v) && !rallyFinished){ rallyFinished=true; celebrate(); }
+    }
+    io.unobserve(e.target);
+  });
+},{threshold:.25});
+Object.keys(spots).forEach(id=>io.observe(document.getElementById(id)));
+
+function celebrate(){
+  const done = document.getElementById('rallyDone');
+  done.style.display='grid';
+  if(hasGsap&&!reduced){
+    gsap.from(done.querySelector('.card'),{scale:.6,opacity:0,rotate:6,duration:.5,ease:'back.out(1.8)'});
+    gsap.to(done,{opacity:0,delay:3.4,duration:.6,onComplete:()=>done.style.display='none'});
+    /* 紙吹雪 */
+    const colors=['#F2D98B','#B7D4C4','#C7361F','#2C4770','#fff'];
+    for(let i=0;i<90;i++){
+      const c=document.createElement('div');
+      c.className='confetti';
+      c.style.left=Math.random()*100+'vw';
+      c.style.background=colors[i%colors.length];
+      document.body.appendChild(c);
+      gsap.to(c,{y:innerHeight+60,rotate:gsap.utils.random(-540,540),x:'+='+gsap.utils.random(-120,120),
+        duration:gsap.utils.random(1.6,3.2),ease:'power1.in',delay:Math.random()*.6,onComplete:()=>c.remove()});
+    }
+  } else {
+    setTimeout(()=>done.style.display='none',3000);
+  }
+}
+</script>
+</body>
+</html>
